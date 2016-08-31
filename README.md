@@ -1,6 +1,6 @@
-# word2vec簡易版[![Build Status](https://travis-ci.org/Stufinite/Time-To-Dinner.svg?branch=master)](https://travis-ci.org/Stufinite/Time-To-Dinner)
+# word2vec簡易版
 
-主要是參考這篇文章：[](http://www.52nlp.cn/%E4%B8%AD%E8%8B%B1%E6%96%87%E7%BB%B4%E5%9F%BA%E7%99%BE%E7%A7%91%E8%AF%AD%E6%96%99%E4%B8%8A%E7%9A%84word2vec%E5%AE%9E%E9%AA%8C)
+主要是參考這篇文章：[我爱自然语言处理](http://www.52nlp.cn/%E4%B8%AD%E8%8B%B1%E6%96%87%E7%BB%B4%E5%9F%BA%E7%99%BE%E7%A7%91%E8%AF%AD%E6%96%99%E4%B8%8A%E7%9A%84word2vec%E5%AE%9E%E9%AA%8C)
 
 
 ## Getting Started
