@@ -5,13 +5,14 @@ import sys, gensim
 import codecs, json
 class query_vec(object):
 	"""docstring for query_vec"""
-	def __init__(self, model, keyword):
+	def __init__(self, model, keyword, num):
 		self.model = gensim.models.Word2Vec.load(model)
 		# load wiki model in
 		self.result = ""
 		self.keyword = keyword
+		self.queryNum = num
 	def __iter__(self):
-		self.result = self.model.most_similar(self.keyword)
+		self.result = self.model.most_similar(self.keyword, self.queryNum)
 		# query similar vocabulary with keyword
 		for i in self.result:
 			yield i[0], i[1]
@@ -25,7 +26,7 @@ if __name__  ==  "__main__":
 		print("Usage:\n\tpython "+sys.argv[0]+" [name of model] "+"[query_keyword]")
 		sys.exit(1)#0為正常絃拋出一個例外，可以被捕獲
 	#print unicode(sys.argv[2], 'utf-8')
-	q = query_vec(sys.argv[1], unicode(sys.argv[2], 'utf-8'))
+	q = query_vec(sys.argv[1], unicode(sys.argv[2], 'utf-8'), int(sys.argv[3]))
 	# init a query_vec instance with argv, note that if you query with chinese, need to turn chinese into unicode, and also import __future__ form unicode_literal
 	f = codecs.open('w2v.tmp','w', encoding='utf-8')
 	# codecs can write file with uft-8, which show chinese character correctly
