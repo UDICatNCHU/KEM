@@ -12,7 +12,7 @@ class query_vec(object):
 		self.keyword = keyword
 		self.queryNum = num
 	def __iter__(self):
-		self.result = self.model.most_similar(self.keyword, self.queryNum)
+		self.result = self.model.most_similar(self.keyword, topn=self.queryNum)
 		# query similar vocabulary with keyword
 		for i in self.result:
 			yield i[0], i[1]

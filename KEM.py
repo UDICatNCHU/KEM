@@ -25,7 +25,7 @@ class KEM(KCM):
 		return wrap
 
 	def getTerms(self, model, keyword):
-		subprocess.call(['python2', 'KEM/querySoup.py', model, keyword, self.queryNum])
+		subprocess.call(['python2', 'KEM/querySoup.py', model, keyword, str(self.queryNum)])
 		with open('w2v.tmp', 'r') as f:
 			result = json.load(f)			
 		return result
