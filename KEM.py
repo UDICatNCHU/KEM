@@ -21,23 +21,23 @@ class KEM(object):
         self.lang = lang
         self.client = MongoClient(uri)
         self.db = self.client['nlp']
-        self.Collect = self.db['kem']       
+        self.Collect = self.db['kem']  
 
-    def getTerms(self, keyword, num):
-        def setDirPath(func):
+    def setDirPath(func):
             @wraps(func)
             def wrap(self, *args, **kw):
                 self.DirPath = self.ParentDir + self.WikiModelDirPath
                 return func(self, *args, **kw)
-            return wrap
+            return wrap     
 
-        @setDirPath
-        def getFilePath(keyword):
-            return '{}/{}/{}.{}'.format(self.DirPath, keyword, keyword, 'model')
+    @setDirPath
+    def getFilePath(self, keyword):
+        return '{}/{}/{}.{}'.format(self.DirPath, keyword, keyword, 'model')
 
+    def getTerms(self, keyword, num):
         result = self.Collect.find({'key':keyword}, {'value':1, '_id':False}).limit(1)
         if result.count() == 0:
-            subprocess.call(['python2', 'KEM/querySoup.py', getFilePath(self.lang), keyword])
+            subprocess.call(['python2', 'KEM/querySoup.py', self.getFilePath(self.lang), keyword])
             with open('w2v.tmp', 'r') as f:
                 result = json.load(f)
                 value = sorted(result, key=lambda x:-x[1])
