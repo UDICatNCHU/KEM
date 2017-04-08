@@ -50,7 +50,7 @@ obj.getTerms(query term, Top k results to return)
 
 ## Result
 
-#### 執行 `python kem.py 日本 100` 的結果(部分)：
+#### 執行 `python kem.py 草履蟲 100` 的結果(部分)：
 
 ```bash
 ['原生動物', 0.7895185351371765]
