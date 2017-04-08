@@ -1,14 +1,14 @@
 # author: Shane Yu  date: April 8, 2017
 import json
 
-class KemMongoCache(object):
+class KEM(object):
     """
-    KemMongoCache class uses MongoDB as a cache to accelerate the process of querying kem model,
+    KEM class uses MongoDB as a cache to accelerate the process of querying kem model,
     getTerms() function returns a list of query result from MongoDB if the query term exists in
     the database(fast), and only do the gensim built-in query function when the query term is not
     in the database(slow).
     """
-    def __init__(self, uri, model_path = './KEM/med250.model.bin'):
+    def __init__(self, uri, model_path = './KEM/med400.model.bin'):
         from pymongo import MongoClient
         self.client = MongoClient(uri)
         self.db = self.client['kem']
@@ -62,7 +62,7 @@ if __name__ == '__main__':
     testing with this section.
     """
     import sys
-    obj = KemMongoCache('mongodb://140.120.13.244:7777/', model_path = './med250.model.bin')
+    obj = KEM('mongodb://140.120.13.244:7777/', model_path = './med400.model.bin')
     temp = obj.getTerms(sys.argv[1], 100)
     for item in json.loads(temp):
         print(item)
