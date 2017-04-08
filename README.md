@@ -1,8 +1,4 @@
-# word2vec簡易版
-
-主要是參考這篇文章：[以 gensim 訓練中文詞向量](http://zake7749.github.io/2016/08/28/word2vec-with-gensim/)
-
-
+# KEM
 ## Get Started
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
@@ -17,7 +13,7 @@ sudo pip install virtualenv
 
 ## Installing
 
-1. 先下載專案： `git clone git@github.com:UDIC-lab-NCHU/word2vec.git`
+1. 先下載專案： `git clone https://github.com/UDICatNCHU/KEM.git`
 2. 然後建議使用virtualenv： `virtualenv venv`
 3. 啟動虛擬環境： `. venv/bin/activate`
 4. 安裝所有需要的套件： `make install`
