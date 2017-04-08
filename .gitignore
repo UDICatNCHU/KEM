@@ -1,10 +1,6 @@
-json
-word2vec
-# auto Created when execute gen_kcm.py
-.idea/
-.term_pair_freq*
-ChineseWikiRawData
-
+jieba_dict/
+build/
+*.model.bin
 
 # Project stuff
 entrance/settings_database.py
