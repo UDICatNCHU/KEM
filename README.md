@@ -1,4 +1,7 @@
 # KEM
+
+訓練Word2Vec model參考文章：[以 gensim 訓練中文詞向量](http://zake7749.github.io/2016/08/28/word2vec-with-gensim/)
+
 ## Get Started
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
