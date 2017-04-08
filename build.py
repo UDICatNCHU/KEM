@@ -111,5 +111,6 @@ if __name__ == '__main__':
     import sys
     # 1) jieba customized dictionary 2) stopwords text file 3) dimension of the model to be trained
     obj = build(sys.argv[1], sys.argv[2], sys.argv[3])
-    # obj = build('jieba_dict/dict.txt.big.txt', 'jieba_dict/stopwords.txt', 400)
     obj.exec()
+
+    # obj = build('jieba_dict/dict.txt.big.txt', 'jieba_dict/stopwords.txt', 400) # examples 
