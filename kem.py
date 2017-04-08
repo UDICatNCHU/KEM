@@ -64,5 +64,8 @@ if __name__ == '__main__':
     import sys
     obj = KEM('mongodb://140.120.13.244:7777/', model_path = './med400.model.bin')
     temp = obj.getTerms(sys.argv[1], 100)
-    for item in json.loads(temp):
-        print(item)
+    if temp:
+        for item in json.loads(temp):
+            print(item)
+    else:
+        print(sys.argv[1] + 'Not in the dictionary.')
