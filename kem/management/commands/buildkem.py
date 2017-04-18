@@ -113,7 +113,7 @@ class Command(BaseCommand):
         # Positional arguments
         parser.add_argument('jiebaDict', type=str)
         parser.add_argument('stopword', type=str)
-        parser.add_argument('dimension', type=str)
+        parser.add_argument('dimension', type=int)
 
     def handle(self, *args, **options):
         # 1) jieba customized dictionary 2) stopwords text file 3) dimension of the model to be trained
@@ -121,4 +121,4 @@ class Command(BaseCommand):
         obj = build(options['jiebaDict'], options['stopword'], options['dimension'])
         obj.exec()
 
-        self.stdout.write(self.style.SUCCESS('insert Articles success!!!'))
+        self.stdout.write(self.style.SUCCESS('build kem model success!!!'))

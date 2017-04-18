@@ -1,5 +1,4 @@
 # author: Shane Yu  date: April 8, 2017
-import json
 
 class KEM(object):
     """
@@ -11,45 +10,38 @@ class KEM(object):
     def __init__(self, uri, model_path = './KEM/med400.model.bin'):
         from pymongo import MongoClient
         self.client = MongoClient(uri)
-        self.db = self.client['kem']
-        self.coll = self.db['kem_coll']
+        self.db = self.client['nlp']
+        self.coll = self.db['kem']
         self.model_path = model_path
         
 
     def getTerms(self, query, num):
         """
-        input: query term, number of top n
+        input: query term of top n
         output: query result in json formmat
         """
         result = self.coll.find({'Term':query}, {'Result':1, '_id':False}).limit(1) # print(type(result)) # <class 'pymongo.cursor.Cursor'>
         if result.count() == 0:
-            resultJson = self.getJsonResult(query, num)
+            resultJson = self.getJsonResult(query)
             self.insertMongo(query, resultJson)
-            return resultJson
+            return resultJson[:num]
 
-        return (list(result)[0])['Result']
+        return (list(result)[0])['Result'][:num]
 
 
     def insertMongo(self, queryTerm, resultList):
         state = self.coll.insert({'Term':queryTerm, 'Result':resultList})
-        print(state)
 
-
-    def getJsonResult(self, queryStr, number):
+    def getJsonResult(self, queryStr):
         """
         input: query term
         output: query result from gensim built-in query function in json formmat
         """
         from gensim import models
-        from gensim.models import word2vec
         try:
-            print('Running most_similar function')
             model = models.KeyedVectors.load_word2vec_format(self.model_path, binary=True)
-            res = model.most_similar(queryStr, topn = number) # most_similar return a list
-            print(queryStr + '相似詞前' + str(number) + '排序')
-            resJson = json.dumps(res)
-
-            return resJson
+            res = model.most_similar(queryStr, topn = 1000) # most_similar return a list
+            return res
 
         except Exception as e:
             print(repr(e))
@@ -57,6 +49,7 @@ class KEM(object):
 
 
 if __name__ == '__main__':
+    import json
     """
     due to the base directory settings of django, the model_path needs to be different when
     testing with this section.
