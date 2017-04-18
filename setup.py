@@ -13,6 +13,9 @@ setup(
     classifiers = [],
     license='GPL3.0',
     install_requires=[
+        'numpy==1.11.1',
+        'scipy==0.18.0',
+        'gensim==0.13.2'
     ],
     zip_safe=True,
 )
