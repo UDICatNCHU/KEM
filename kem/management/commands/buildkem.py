@@ -1,4 +1,5 @@
 # author: Shane Yu  date: April 8, 2017
+from django.core.management.base import BaseCommand, CommandError
 import subprocess
 import logging
 
@@ -105,12 +106,19 @@ class build(object):
         self.train()
         print('========================== ' + str(self.dimension) + '維model訓練完畢，model存放在當前目錄 ==========================')
 
+class Command(BaseCommand):
+    help = 'use this for build model of KEM!'
+    
+    def add_arguments(self, parser):
+        # Positional arguments
+        parser.add_argument('jiebaDict', type=str)
+        parser.add_argument('stopword', type=str)
+        parser.add_argument('dimension', type=str)
 
+    def handle(self, *args, **options):
+        # 1) jieba customized dictionary 2) stopwords text file 3) dimension of the model to be trained
+        # obj = build('jieba_dict/dict.txt.big.txt', 'jieba_dict/stopwords.txt', 400) # examples 
+        obj = build(options['jiebaDict'], options['stopword'], options['dimension'])
+        obj.exec()
 
-if __name__ == '__main__':
-    import sys
-    # 1) jieba customized dictionary 2) stopwords text file 3) dimension of the model to be trained
-    obj = build(sys.argv[1], sys.argv[2], sys.argv[3])
-    obj.exec()
-
-    # obj = build('jieba_dict/dict.txt.big.txt', 'jieba_dict/stopwords.txt', 400) # examples 
+        self.stdout.write(self.style.SUCCESS('insert Articles success!!!'))
