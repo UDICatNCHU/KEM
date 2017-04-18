@@ -2,7 +2,9 @@ from distutils.core import setup
 
 setup(
     name = 'kem',
-    packages = ['kem'],
+    packages=['kem'],
+    package_dir={'kem':'kem'},
+    package_data={'kem':['management/commands/*']},
     version = '1.0',
     description = 'A django App for kem',
     author = ['davidtnfsh', 'theshaneyu'],
