@@ -44,9 +44,8 @@ class KEM(object):
             return res
 
         except Exception as e:
-            print(repr(e))
-            raise e
-
+            return []
+            
 if __name__ == '__main__':
     import json
     """
