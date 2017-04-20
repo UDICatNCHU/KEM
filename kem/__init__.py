@@ -39,14 +39,13 @@ class KEM(object):
         """
         from gensim import models
         try:
-            model = models.KeyedVectors.load_word2vec_format(self.model_path, binary=True)
+            model = models.Word2Vec.load_word2vec_format(self.model_path, binary=True)
             res = model.most_similar(queryStr, topn = 1000) # most_similar return a list
             return res
 
         except Exception as e:
             print(repr(e))
-
-
+            raise e
 
 if __name__ == '__main__':
     import json
