@@ -18,4 +18,5 @@ from kem import views
 
 urlpatterns = [
     url(r'^$', views.kem, name='kem'), 
+    url(r'^vector$', views.vector, name='vector'), 
 ]

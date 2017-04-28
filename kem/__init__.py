@@ -9,8 +9,8 @@ class KEM(object):
     """
     def __init__(self, uri, model_path = './KEM/med400.model.bin'):
         from pymongo import MongoClient
-        from gensim import models
-        self.model = models.Word2Vec.load_word2vec_format(model_path, binary=True)
+        self.model_path = model_path
+        self.model = None
         self.client = MongoClient(uri)
         self.db = self.client['nlp']
         self.synonym = self.db['kem'] # 放同義字的collection
@@ -25,28 +25,40 @@ class KEM(object):
         # return <class 'pymongo.cursor.Cursor'>
         if result.count() == 0:
             try:
+                self.get_or_load_model()
                 result = self.model.most_similar(keyword, topn = 1000) # most_similar return a list
                 self.insertMongo(self.synonym, keyword, result)
                 return result[:num]
-            except Exception as e:
+            except KeyError as e:
                 return []
+            except Exception as e:
+                raise e
         return (list(result)[0])['Result'][:num]
 
     def getVect(self, keyword):
         result = self.vector.find({'Term':keyword}, {'Result':1, '_id':False}).limit(1)
         if result.count() == 0:
             try:
+                self.get_or_load_model()
                 result = self.model[keyword].tolist()
                 self.insertMongo(self.vector, keyword, result)
                 return result
-            except Exception as e:
+            except KeyError as e:
                 return []
+            except Exception as e:
+                raise e
         return (list(result)[0])['Result']
 
     @staticmethod
     def insertMongo(collection, keyword, result):
         state = collection.insert({'Term':keyword, 'Result':result})
-            
+
+    def get_or_load_model(self):
+        if self.model != None:
+            return
+        from gensim import models
+        self.model = models.KeyedVectors.load_word2vec_format(self.model_path, binary=True)
+
 if __name__ == '__main__':
     import json
     """
