@@ -15,3 +15,10 @@ def kem(request):
     result = obj.getTerms(keyword, int(request.GET['num']) if 'num' in request.GET else 10)
     return JsonResponse(result, safe=False)
 
+@queryString_required(['keyword'])
+def vector(request):
+	keyword = request.GET['keyword']
+	obj = KEM(uri=uri, model_path = './med400.model.bin')
+	result = obj.getVect(keyword)
+	return JsonResponse(result, safe=False)
+
