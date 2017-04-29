@@ -61,9 +61,8 @@ class build(object):
 
         # load stopwords set
         stopwordset = set()
-        with open(self.stopwordsPath, 'r', encoding='utf-8') as sw:
-            for line in sw:
-                stopwordset.add(line.strip('\n'))
+        for i in json.load(open(self.stopwordsPath, 'r', encoding='utf-8')):
+            stopwordset.add(i)                
 
         output = open('./build/wiki_seg.txt', 'w')
         

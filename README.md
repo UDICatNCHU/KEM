@@ -24,24 +24,15 @@ sudo pip install virtualenv
 ## Run
 #### Building the model
 1. Running build.py
-```bash
-python build.py 結巴自訂字典path 停用詞path 欲訓練model之維度
 ```
-
-2. import build class from build.py
-```python
-obj = build(結巴自訂字典path, 停用詞path, 欲訓練model之維度)
-obj.exec()
+python manage.py buildkem 結巴自訂字典path 停用詞path 欲訓練model之維度
 ```
 
 #### Usage of KEM class
-1. Running `kem.py`
-```bash
-python kem.py QueryTerm TopK
-```
 
-2. import `KEM` class from `kem.py`
-```python
+1. import `KEM` class from `kem`
+```
+from kem import KEM
 obj = KEM(MongoDB uri, word2vec model path)
 obj.getTerms(query term, Top k results to return)
 ```
