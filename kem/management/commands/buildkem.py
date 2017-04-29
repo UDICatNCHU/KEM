@@ -2,6 +2,7 @@
 from django.core.management.base import BaseCommand, CommandError
 import subprocess
 import logging
+import json
 
 
 class build(object):
