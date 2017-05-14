@@ -10,32 +10,42 @@ These instructions will get you a copy of the project up and running on your loc
 
 Ubuntu需要先安裝：
 
-```bash
-sudo pip install virtualenv
-```
+`sudo pip install virtualenv`
 
 ## Installing
 
-1. 先下載專案： `git clone https://github.com/UDICatNCHU/KEM.git`
-2. 然後建議使用virtualenv： `virtualenv venv`
-3. 啟動虛擬環境： `. venv/bin/activate`
-4. 安裝所有需要的套件： `make install`
+1. `pip install kem`
 
 ## Run
-#### Building the model
-1. Running build.py
-```
-python manage.py buildkem 結巴自訂字典path 停用詞path 欲訓練model之維度
-```
+#### Building the model  
+使用api前必須先建立model  
+停用詞以及結巴斷詞的字典在這邊  
 
-#### Usage of KEM class
+> 1. 結巴字典：格式是txt, 在 [Open-Sentiment-Training-Data](https://github.com/UDICatNCHU/Open-Sentiment-Training-Data)當中，有數份字典
+可以依需求將字典合併成一份後再去斷詞，效果會不同。  
+> 2. 停用詞：有在停用詞裏面的單字會被當作冗詞贅字給濾掉，在此應用中只需要拿 [stopwrds](https://github.com/UDICatNCHU/Open-Sentiment-Training-Data/tree/master/stopwrds)裏面的stopwrds.json即可
 
-1. import `KEM` class from `kem`
-```
-from kem import KEM
-obj = KEM(MongoDB uri, word2vec model path)
-obj.getTerms(query term, Top k results to return)
-```
+1. `python manage.py buildkem 結巴自訂字典path 停用詞path 欲訓練model之維度(目前是400維，維度愈大檔案愈大)`
+
+#### Usage of KEM class  
+因為KEM是一個django的函式庫，所以需要設定urls.py以及vies.py  
+並且在settings.py INSTALLED_APPS 新增kem喔
+
+1. settings.py：
+  ```
+  INSTALLED_APPS = [
+      'kem'
+       ...
+  ]
+  ```
+2. urls.py：  
+在專案的urls.py引入函式庫的urls.py即可使用該api  
+  ```
+  import kem.urls
+  urlpatterns += [
+      url(r'^kem/', include(kem.urls))
+  ]
+  ```
 
 
 ## API
