@@ -25,7 +25,16 @@ Ubuntu需要先安裝：
 可以依需求將字典合併成一份後再去斷詞，效果會不同。  
 > 2. 停用詞：有在停用詞裏面的單字會被當作冗詞贅字給濾掉，在此應用中只需要拿 [stopwrds](https://github.com/UDICatNCHU/Open-Sentiment-Training-Data/tree/master/stopwrds)裏面的stopwrds.json即可
 
-1. `python manage.py buildkem 結巴自訂字典path 停用詞path 欲訓練model之維度(目前是400維，維度愈大檔案愈大)`
+1. command:
+```
+usage: manage.py buildkem  [--jiebaDict JIEBADICT] [--stopword STOPWORD] 
+                           [--dimension DIMENSION] [--ontology ONTOLOGY]
+```
+* args:
+  * jiebaDict:結巴自訂字典
+  * stopword:停用詞(是否開啟ontology模式)
+  * dimension:欲訓練model之維度(目前是400維，維度愈大檔案愈大)
+  * ontology:是否開啟ontology模式
 
 #### Usage of KEM class  
 因為KEM是一個django的函式庫，所以需要設定urls.py以及vies.py  

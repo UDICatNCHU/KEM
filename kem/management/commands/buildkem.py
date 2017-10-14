@@ -1,8 +1,8 @@
 # author: Shane Yu  date: April 8, 2017
 from django.core.management.base import BaseCommand, CommandError
-import subprocess
-import logging
-import json
+import subprocess, logging, json, requests
+from kcem.utils.utils import criteria
+from kcem.utils.utils import model as w2vModel
 
 
 class build(object):
@@ -17,7 +17,8 @@ class build(object):
 
     ps. An extra directiory will be created during the process.
     """
-    def __init__(self, jiebaDictPath, stopwordsPath, dimension):
+    def __init__(self, ontology, jiebaDictPath, stopwordsPath, dimension):
+        self.ontology = ontology
         self.jiebaDictPath = jiebaDictPath
         self.stopwordsPath = stopwordsPath
         self.dimension = dimension
@@ -49,6 +50,25 @@ class build(object):
 
     def opencc(self):
         subprocess.call(['opencc', '-i', './build/wiki_texts.txt', '-o', './build/wiki_zh_tw.txt'])
+
+    def keyword2entity(self):
+        # 判断一个unicode是否是汉字
+        def is_chinese(uchar):         
+            if '\u4e00' <= uchar<='\u9fff':
+                return True
+            else:
+                return False
+
+        keywordList = sorted([i for i in w2vModel.vocab.keys() if len(i) >2 and is_chinese(i)], key=lambda x:len(x), reverse=True)
+        with open('./build/wiki_zh_tw.txt','r') as f :
+            context = f.read()
+            for keyword in keywordList:
+                entity = requests.get('http://140.120.13.244:10000/kcem/kcem_new?lang=cht&keyword={}'.format(keyword)).json()
+                if len(entity):
+                    context = context.replace(keyword, entity[0][0])
+        with open('./build/wiki_zh_tw.txt','w', encoding='utf-8') as f:
+            f.write(context)
+
 
 
     def segmentation(self):
@@ -101,6 +121,9 @@ class build(object):
         print('========================== 壓縮檔轉文字檔過程完畢，開始繁轉簡過程 ==========================')
         self.opencc()
         print('========================== 繁轉簡過程完畢，開始斷詞 ==========================')
+        if self.ontology:
+            self.keyword2entity()
+            print('========================== 用kcem把單子轉成entity ==========================')
         self.segmentation()
         print('========================== 斷詞完畢，開始訓練model ==========================')
         self.train()
@@ -111,14 +134,20 @@ class Command(BaseCommand):
     
     def add_arguments(self, parser):
         # Positional arguments
-        parser.add_argument('jiebaDict', type=str)
-        parser.add_argument('stopword', type=str)
-        parser.add_argument('dimension', type=int)
+        parser.add_argument('--jiebaDict', type=str)
+        parser.add_argument('--stopword', type=str)
+        parser.add_argument('--dimension', type=int)
+        parser.add_argument(
+            '--ontology',
+            default=False,
+            type=bool,
+            help='use Ontology result to rebuild word2vec to extract relations and axioms',
+        )
 
     def handle(self, *args, **options):
         # 1) jieba customized dictionary 2) stopwords text file 3) dimension of the model to be trained
         # obj = build('jieba_dict/dict.txt.big.txt', 'jieba_dict/stopwords.txt', 400) # examples 
-        obj = build(options['jiebaDict'], options['stopword'], options['dimension'])
+        obj = build(options['ontology'], options['jiebaDict'], options['stopword'], options['dimension'])
         obj.exec()
 
         self.stdout.write(self.style.SUCCESS('build kem model success!!!'))
