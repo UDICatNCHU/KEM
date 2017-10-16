@@ -51,26 +51,6 @@ class build(object):
     def opencc(self):
         subprocess.call(['opencc', '-i', './build/wiki_texts.txt', '-o', './build/wiki_zh_tw.txt'])
 
-    def keyword2entity(self):
-        # 判断一个unicode是否是汉字
-        def is_chinese(uchar):         
-            if '\u4e00' <= uchar<='\u9fff':
-                return True
-            else:
-                return False
-
-        keywordList = sorted([i for i in w2vModel.vocab.keys() if len(i) >2 and is_chinese(i)], key=lambda x:len(x), reverse=True)
-        with open('./build/wiki_zh_tw.txt','r') as f :
-            context = f.read()
-            for keyword in keywordList:
-                entity = requests.get('http://140.120.13.244:10000/kcem/kcem_new?lang=cht&keyword={}'.format(keyword)).json()
-                if len(entity):
-                    context = context.replace(keyword, entity[0][0])
-        with open('./build/wiki_zh_tw.txt','w', encoding='utf-8') as f:
-            f.write(context)
-
-
-
     def segmentation(self):
         # takes about 30 minutes
         import jieba
@@ -100,13 +80,47 @@ class build(object):
                     logging.info("已完成前 %d 行的斷詞" % texts_num)
         output.close()
 
+    def keyword2entity(self):
+        import pandas as pd
+        import pyprind
+        # 判断一个unicode是否是汉字
+        def is_chinese(uchar):         
+            if '\u4e00' <= uchar<='\u9fff':
+                return True
+            else:
+                return False
+
+        keywordList = sorted([i for i in w2vModel.vocab.keys() if len(i) >2 and is_chinese(i)], key=lambda x:len(x), reverse=True)
+
+        with open('./build/wiki_seg.txt', 'r') as f:
+            text = f.read().split()
+        df = pd.DataFrame({'wiki': text})
+
+        for keyword in pyprind.prog_bar(keywordList):
+            entity = requests.get('http://140.120.13.244:10000/kcem/kcem_new?lang=cht&keyword={}'.format(keyword)).json()
+            print(keyword)
+            if len(entity):
+                df = df.replace(to_replace=[keyword], value=[entity[0][0]] )
+
+        wiki_json = json.loads(df.to_json())
+        json.dump(wiki_json, open('wiki.replace.json','w'))
+        wiki_string = ' '.join([wiki_json[str(index[0])] for index in enumerate(wiki_json)])
+        with open('./build/wiki_seg_replace.txt','w', encoding='utf-8') as f:
+            f.write(wiki_string)
 
     def train(self):
         from gensim.models import word2vec
         import multiprocessing
 
         logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
-        sentences = word2vec.Text8Corpus('./build/wiki_seg.txt')
+
+        if self.ontology:
+            # 使用ontology的實驗性功能，去建立word2vec
+            sentences = word2vec.Text8Corpus('./build/wiki_seg_replace.txt')
+        else:
+            # 正常版的word2vec
+            sentences = word2vec.Text8Corpus('./build/wiki_seg.txt')
+
         model = word2vec.Word2Vec(sentences, size=self.dimension, workers=multiprocessing.cpu_count())
 
         # Save our model.
@@ -121,11 +135,11 @@ class build(object):
         print('========================== 壓縮檔轉文字檔過程完畢，開始繁轉簡過程 ==========================')
         self.opencc()
         print('========================== 繁轉簡過程完畢，開始斷詞 ==========================')
+        self.segmentation()
+        print('========================== 斷詞完畢，開始訓練model ==========================')
         if self.ontology:
             self.keyword2entity()
             print('========================== 用kcem把單子轉成entity ==========================')
-        self.segmentation()
-        print('========================== 斷詞完畢，開始訓練model ==========================')
         self.train()
         print('========================== ' + str(self.dimension) + '維model訓練完畢，model存放在當前目錄 ==========================')
 
