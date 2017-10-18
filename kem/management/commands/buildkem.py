@@ -1,8 +1,11 @@
 # author: Shane Yu  date: April 8, 2017
 from django.core.management.base import BaseCommand, CommandError
-import subprocess, logging, json, requests
+import subprocess, logging, json
 from kcem.utils.utils import criteria
 from kcem.utils.utils import model as w2vModel
+from kcem.views import kcem_new as kcemNewRequest
+from django.http import HttpRequest
+
 
 
 class build(object):
@@ -95,9 +98,12 @@ class build(object):
         with open('./build/wiki_seg.txt', 'r') as f:
             text = f.read().split()
         df = pd.DataFrame({'wiki': text})
+        httpReq = HttpRequest()
+        httpReq.method = 'GET'
 
         for keyword in pyprind.prog_bar(keywordList):
-            entity = requests.get('http://140.120.13.244:10000/kcem/kcem_new?lang=cht&keyword={}'.format(keyword)).json()
+            httpReq.GET['keyword'] = keyword
+            entity = json.loads(kcemNewRequest(httpReq).getvalue().decode('utf-8'))
             print(keyword)
             if len(entity):
                 df = df.replace(to_replace=[keyword], value=[entity[0][0]] )
