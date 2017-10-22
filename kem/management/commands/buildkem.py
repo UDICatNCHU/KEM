@@ -1,13 +1,13 @@
 # author: Shane Yu  date: April 8, 2017
 from django.core.management.base import BaseCommand, CommandError
-import subprocess, logging, json
+import subprocess, logging, json, multiprocessing
 from kcem.utils.utils import criteria
 from kcem.utils.utils import model as w2vModel
-from kcem.views import kcem_new as kcemNewRequest
 from django.http import HttpRequest
+from udic_nlp_API.settings_database import uri
 
 
-
+logging.basicConfig(format='%(levelname)s : %(asctime)s : %(message)s', filename='buildKEM.log', level=logging.INFO)
 class build(object):
     """
     build class can build the word2vec model automatically from downloading the wiki raw data all the way to the training porcess,
@@ -25,7 +25,7 @@ class build(object):
         self.jiebaDictPath = jiebaDictPath
         self.stopwordsPath = stopwordsPath
         self.dimension = dimension
-
+        self.keyword2entityList = []
 
     def creatBuildDir(self):
         subprocess.call(['mkdir', 'build'])
@@ -39,7 +39,6 @@ class build(object):
         # This function takes about 25 minutes
         from gensim.corpora import WikiCorpus
 
-        logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
         wiki_corpus = WikiCorpus('./build/zhwiki-latest-pages-articles.xml.bz2', dictionary={})
         
         texts_num = 0
@@ -57,8 +56,6 @@ class build(object):
     def segmentation(self):
         # takes about 30 minutes
         import jieba
-
-        logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
         # jieba custom setting.
         jieba.set_dictionary(self.jiebaDictPath)
@@ -84,41 +81,75 @@ class build(object):
         output.close()
 
     def keyword2entity(self):
-        import pandas as pd
-        import pyprind
+        from collections import defaultdict
+        import pyprind, math, pymongo, threading
+        self.Collect = pymongo.MongoClient(uri)['nlp']['kcem']
         # 判断一个unicode是否是汉字
         def is_chinese(uchar):         
             if '\u4e00' <= uchar<='\u9fff':
                 return True
             else:
                 return False
+        ConvertKeywordSet = {i for i in w2vModel.vocab.keys() if len(i) >2 and is_chinese(i)}
+        threadLock = threading.Lock()
 
-        keywordList = sorted([i for i in w2vModel.vocab.keys() if len(i) >2 and is_chinese(i)], key=lambda x:len(x), reverse=True)
+        def convert2KCEM(InvertedIndexList):
+            for index, pair in enumerate(InvertedIndexList):
+                key = pair[0]
+                value = pair[-1]
+                if key not in ConvertKeywordSet:
+                    continue
+
+                entity = self.Collect.find({'key':key}, {'value':1, '_id':False}).limit(1)
+                if entity.count() == 0:
+                    continue
+                entity = dict(list(entity)[0])['value']
+                if len(entity):
+                    InvertedIndexList[index] = (entity[0][0], value)
+                if index % 100 == 0:
+                    logging.info("已處理 %d 個單子" % index)
+            threadLock.acquire()
+            self.keyword2entityList += InvertedIndexList
+            threadLock.release()
+
 
         with open('./build/wiki_seg.txt', 'r') as f:
-            text = f.read().split()
-        df = pd.DataFrame({'wiki': text})
-        httpReq = HttpRequest()
-        httpReq.method = 'GET'
+            try:
+                text = f.read().split()
+                invertedIndex = json.load(open('invertedIndex.json', 'r'))
+            except Exception as e:
+                invertedIndex = defaultdict(list)
+                text = f.read().split()
+                for index, word in pyprind.prog_bar(list(enumerate(text))):
+                    invertedIndex[word].append(index)
+                json.dump(invertedIndex, open('invertedIndex.json', 'w'))
 
-        for keyword in pyprind.prog_bar(keywordList):
-            httpReq.GET['keyword'] = keyword
-            entity = json.loads(kcemNewRequest(httpReq).getvalue().decode('utf-8'))
-            print(keyword)
-            if len(entity):
-                df = df.replace(to_replace=[keyword], value=[entity[0][0]] )
+            invertedIndexItem = list(invertedIndex.items())
+            step = math.ceil(len(invertedIndex)/multiprocessing.cpu_count())
+            invertedIndexItem = [invertedIndexItem[i:i + step] for i in range(0, len(invertedIndex), step)]
 
-        wiki_json = json.loads(df.to_json())
-        json.dump(wiki_json, open('wiki.replace.json','w'))
-        wiki_string = ' '.join([wiki_json[str(index[0])] for index in enumerate(wiki_json)])
+        workers = [threading.Thread(target=convert2KCEM, kwargs={'InvertedIndexList':invertedIndexItem[i]}, name=str(i)) for i in range(multiprocessing.cpu_count())]
+
+        logging.info('start thread')
+        for thread in workers:
+           thread.start()
+
+        # Wait for all threads to complete
+        for thread in workers:
+            thread.join()
+
+        # convert self.keyword2entityList from inverted Index format into plain text format, just like `text = f.read().split()`
+        # and then i'll use ' '.join to turn it back into original text format.
+        textList = [None] * (len(text))
+        for keyword, indexList in self.keyword2entityList:
+            for index in indexList:
+                textList[index] = keyword
+        wiki_string = ' '.join(textList)
         with open('./build/wiki_seg_replace.txt','w', encoding='utf-8') as f:
             f.write(wiki_string)
 
     def train(self):
         from gensim.models import word2vec
-        import multiprocessing
-
-        logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
         if self.ontology:
             # 使用ontology的實驗性功能，去建立word2vec
@@ -130,7 +161,7 @@ class build(object):
         model = word2vec.Word2Vec(sentences, size=self.dimension, workers=multiprocessing.cpu_count())
 
         # Save our model.
-        model.wv.save_word2vec_format('./med' + str(self.dimension) + '.model.bin', binary=True)
+        model.wv.save_word2vec_format('./build/med' + str(self.dimension) + '.model.bin', binary=True)
 
 
     def exec(self):
@@ -154,9 +185,9 @@ class Command(BaseCommand):
     
     def add_arguments(self, parser):
         # Positional arguments
-        parser.add_argument('--jiebaDict', type=str)
-        parser.add_argument('--stopword', type=str)
-        parser.add_argument('--dimension', type=int)
+        parser.add_argument('--jiebaDict', type=str, required=True)
+        parser.add_argument('--stopword', type=str, required=True)
+        parser.add_argument('--dimension', type=int, required=True)
         parser.add_argument(
             '--ontology',
             default=False,
