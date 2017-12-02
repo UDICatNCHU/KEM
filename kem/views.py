@@ -4,7 +4,6 @@ from djangoApiDec.djangoApiDec import queryString_required
 from kem import KEM
 from udic_nlp_API.settings_database import uri
 obj = KEM(uri=uri, model_path = './med400.model.bin')
-obj.get_or_load_model()
 
 @queryString_required(['keyword'])
 def kem(request):
