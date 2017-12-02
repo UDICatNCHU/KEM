@@ -10,7 +10,7 @@ class KEM(object):
     the database(fast), and only do the gensim built-in query function when the query term is not
     in the database(slow).
     """
-    def __init__(self, uri, model_path = './KEM/med400.model.bin'):
+    def __init__(self, uri, model_path = './med400.model.bin'):
         from gensim import models
         self.model = models.KeyedVectors.load_word2vec_format(model_path, binary=True)
 
