@@ -13,7 +13,7 @@ def kem(request):
     testing with this section.
     """
     keyword = request.GET['keyword']
-    result = obj.getTerms(keyword, int(request.GET['num']) if 'num' in request.GET else 10)
+    result = obj.most_similar(keyword, int(request.GET['num']) if 'num' in request.GET else 10)
     return JsonResponse(result, safe=False)
 
 @queryString_required(['keyword'])

@@ -1,9 +1,7 @@
 # author: Shane Yu  date: April 8, 2017
 from django.core.management.base import BaseCommand, CommandError
 import subprocess, logging, json, multiprocessing
-from kcem.utils.utils import criteria
 from kcem.utils.utils import model as w2vModel
-from django.http import HttpRequest
 from udic_nlp_API.settings_database import uri
 
 
@@ -85,12 +83,16 @@ class build(object):
         import pyprind, math, pymongo, threading
         self.Collect = pymongo.MongoClient(uri)['nlp']['kcem']
         # 判断一个unicode是否是汉字
-        def is_chinese(uchar):         
-            if '\u4e00' <= uchar<='\u9fff':
-                return True
-            else:
-                return False
-        ConvertKeywordSet = {i for i in w2vModel.vocab.keys() if len(i) >2 and is_chinese(i)}
+        def is_chinese(keyword):
+            for uchar in keyword:
+                if '\u4e00' <= uchar<='\u9fff':
+                    continue
+                else:
+                    return False
+            return True
+
+        # 需要實驗才知道，哪些單字需要透過kcem做轉換
+        ConvertKeywordSet = {i for i in w2vModel.vocab.keys() if is_chinese(i)}
         threadLock = threading.Lock()
 
         def convert2KCEM(InvertedIndexList):
@@ -103,9 +105,13 @@ class build(object):
                 entity = self.Collect.find({'key':key}, {'value':1, '_id':False}).limit(1)
                 if entity.count() == 0:
                     continue
-                entity = dict(list(entity)[0])['value']
-                if len(entity):
-                    InvertedIndexList[index] = (entity[0][0], value)
+                try:
+                    entity = dict(list(entity)[0])['value']
+                    if len(entity):
+                        InvertedIndexList[index] = (entity[0][0], value)
+                except Exception as e:
+                    entity = self.Collect.find({'key':key}, {'value':1, '_id':False}).limit(1)
+                    print(list(entity), pair, index)
                 if index % 100 == 0:
                     logging.info("已處理 %d 個單子" % index)
             threadLock.acquire()
@@ -114,19 +120,18 @@ class build(object):
 
 
         with open('./build/wiki_seg.txt', 'r') as f:
+            text = f.read().split()
             try:
-                text = f.read().split()
-                invertedIndex = json.load(open('invertedIndex.json', 'r'))
+                invertedIndex = json.load(open('./build/invertedIndex.json', 'r'))
             except Exception as e:
                 invertedIndex = defaultdict(list)
-                text = f.read().split()
                 for index, word in pyprind.prog_bar(list(enumerate(text))):
                     invertedIndex[word].append(index)
-                json.dump(invertedIndex, open('invertedIndex.json', 'w'))
+                json.dump(invertedIndex, open('./build/invertedIndex.json', 'w'))
 
             invertedIndexItem = list(invertedIndex.items())
-            step = math.ceil(len(invertedIndex)/multiprocessing.cpu_count())
-            invertedIndexItem = [invertedIndexItem[i:i + step] for i in range(0, len(invertedIndex), step)]
+            step = math.ceil(len(invertedIndexItem)/multiprocessing.cpu_count())
+            invertedIndexItem = [invertedIndexItem[i:i + step] for i in range(0, len(invertedIndexItem), step)]
 
         workers = [threading.Thread(target=convert2KCEM, kwargs={'InvertedIndexList':invertedIndexItem[i]}, name=str(i)) for i in range(multiprocessing.cpu_count())]
 
@@ -165,15 +170,15 @@ class build(object):
 
 
     def exec(self):
-        print('========================== 開始下載wiki壓縮檔 ==========================')
-        self.getWiki()
-        print('========================== wiki壓縮檔下載完畢，開始將壓縮檔轉成文字檔 ==========================')
-        self.wikiToTxt()
-        print('========================== 壓縮檔轉文字檔過程完畢，開始繁轉簡過程 ==========================')
-        self.opencc()
-        print('========================== 繁轉簡過程完畢，開始斷詞 ==========================')
-        self.segmentation()
-        print('========================== 斷詞完畢，開始訓練model ==========================')
+        # print('========================== 開始下載wiki壓縮檔 ==========================')
+        # self.getWiki()
+        # print('========================== wiki壓縮檔下載完畢，開始將壓縮檔轉成文字檔 ==========================')
+        # self.wikiToTxt()
+        # print('========================== 壓縮檔轉文字檔過程完畢，開始繁轉簡過程 ==========================')
+        # self.opencc()
+        # print('========================== 繁轉簡過程完畢，開始斷詞 ==========================')
+        # self.segmentation()
+        # print('========================== 斷詞完畢，開始訓練model ==========================')
         if self.ontology:
             self.keyword2entity()
             print('========================== 用kcem把單子轉成entity ==========================')
