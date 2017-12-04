@@ -1,6 +1,3 @@
-from ngram import NGram
-from gensim import models
-
 # author: Shane Yu  date: April 8, 2017
 # author: Chang Tai-Wei  date: April 8, 2017
 
@@ -12,7 +9,9 @@ class KEM(object):
     in the database(slow).
     """
     def __init__(self, uri, model_path = './med400.model.bin'):
-        self.model = models.KeyedVectors.load_word2vec_format(model_path, binary=True)
+        from ngram import NGram
+        import gensim
+        self.model = gensim.models.keyedvectors.KeyedVectors.load_word2vec_format(model_path, binary=True)
 
         # ngram search
         self.modelNgram = NGram(self.model.wv.vocab.keys())
