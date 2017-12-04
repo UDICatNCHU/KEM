@@ -1,4 +1,5 @@
 from ngram import NGram
+from gensim import models
 
 # author: Shane Yu  date: April 8, 2017
 # author: Chang Tai-Wei  date: April 8, 2017
@@ -11,7 +12,6 @@ class KEM(object):
     in the database(slow).
     """
     def __init__(self, uri, model_path = './med400.model.bin'):
-        from gensim import models
         self.model = models.KeyedVectors.load_word2vec_format(model_path, binary=True)
 
         # ngram search
@@ -25,13 +25,19 @@ class KEM(object):
         try:
             return self.model.most_similar(keyword, topn = num) # most_similar return a list
         except KeyError as e:
-            return self.model.most_similar(self.modelNgram.find(keyword), topn = num)
+            keyword = self.modelNgram.find(keyword)
+            if keyword:
+                return self.model.most_similar(keyword, topn = num)
+            return [('None', 0)]
 
     def getVect(self, keyword):
         try:
             return self.model[keyword].tolist()
         except KeyError as e:
-            return self.model[self.modelNgram.find(keyword)].tolist()        
+            keyword = self.modelNgram.find(keyword)
+            if keyword:
+                return self.model[keyword].tolist()
+            return [0]*400
 
 if __name__ == '__main__':
     import json
