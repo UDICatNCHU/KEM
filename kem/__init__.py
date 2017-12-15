@@ -22,21 +22,23 @@ class KEM(object):
         output: keyword result in json formmat
         """
         try:
-            return self.model.most_similar(keyword, topn = num) # most_similar return a list
+            result = self.model.most_similar(keyword, topn = num) # most_similar return a list
         except KeyError as e:
             keyword = self.modelNgram.find(keyword)
-            if keyword:
-                return self.model.most_similar(keyword, topn = num)
-            return [('None', 0)]
+            if keyword == None:
+                return {}
+            result = self.model.most_similar(keyword, topn = num)
+        return {'key':keyword, 'value':result}
 
     def getVect(self, keyword):
         try:
-            return self.model[keyword].tolist()
+            result = self.model[keyword].tolist()
         except KeyError as e:
             keyword = self.modelNgram.find(keyword)
-            if keyword:
-                return self.model[keyword].tolist()
-            return [0]*400
+            if keyword == None:
+                return [0]*400
+            result = self.model[keyword].tolist()
+        return {'key':keyword, 'value':result}
 
 if __name__ == '__main__':
     import json
