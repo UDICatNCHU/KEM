@@ -101,14 +101,10 @@ usage: manage.py buildkem  [--jiebaDict JIEBADICT] [--stopword STOPWORD]
 
 python3.4
 
-## Versioning
-
-For the versions available, see the [tags on this repository](https://github.com/Stufinite/Time-To-Dinner/releases).
-
 ## Contributors
 * __張泰瑋__ [david](https://github.com/david30907d)
 * __游哲軒__ [Shane Yu](https://github.com/theshaneyu)
 
 ## License
 
-## Acknowledgments
+This package use `GPL3.0` License.
