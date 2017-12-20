@@ -1,9 +1,10 @@
 # author: Shane Yu  date: April 8, 2017
 from django.core.management.base import BaseCommand, CommandError
-import subprocess, logging, json, multiprocessing
+import subprocess, logging, json, multiprocessing, jieba
 from kcem.utils.utils import model as w2vModel
 from udic_nlp_API.settings_database import uri
-
+from udicOpenData.dictionary import *
+from udicOpenData.stopwords import *
 
 logging.basicConfig(format='%(levelname)s : %(asctime)s : %(message)s', filename='buildKEM.log', level=logging.INFO)
 class build(object):
@@ -12,16 +13,12 @@ class build(object):
     and the model will be created in the CURRENT directory.
 
     constructors to be initialized:
-    1) path of customized jieba dictionarty
-    2) path of stopwords
-    3) dimension of the model to be trained(integer)
+    1) dimension of the model to be trained(integer)
 
     ps. An extra directiory will be created during the process.
     """
-    def __init__(self, ontology, jiebaDictPath, stopwordsPath, dimension):
+    def __init__(self, ontology, dimension):
         self.ontology = ontology
-        self.jiebaDictPath = jiebaDictPath
-        self.stopwordsPath = stopwordsPath
         self.dimension = dimension
         self.keyword2entityList = []
 
@@ -53,15 +50,6 @@ class build(object):
 
     def segmentation(self):
         # takes about 30 minutes
-        import jieba
-
-        # jieba custom setting.
-        jieba.set_dictionary(self.jiebaDictPath)
-
-        # load stopwords set
-        stopwordset = set()
-        for i in json.load(open(self.stopwordsPath, 'r', encoding='utf-8')):
-            stopwordset.add(i)                
 
         output = open('./build/wiki_seg.txt', 'w')
         
@@ -69,10 +57,8 @@ class build(object):
         
         with open('./build/wiki_zh_tw.txt','r') as content :
             for line in content:
-                words = jieba.cut(line, cut_all=False)
-                for word in words:
-                    if word not in stopwordset:
-                        output.write(word +' ')
+                for word in rmsw(line):
+                    output.write(word +' ')
                 texts_num += 1
                 if texts_num % 10000 == 0:
                     logging.info("已完成前 %d 行的斷詞" % texts_num)
@@ -166,7 +152,7 @@ class build(object):
         model = word2vec.Word2Vec(sentences, size=self.dimension, workers=multiprocessing.cpu_count())
 
         # Save our model.
-        model.wv.save_word2vec_format('./build/med' + str(self.dimension) + '.model.bin', binary=True)
+        model.wv.save_word2vec_format('./med{}.model.bin'.format(str(self.dimension)), binary=True)
 
 
     def exec(self):
@@ -190,9 +176,7 @@ class Command(BaseCommand):
     
     def add_arguments(self, parser):
         # Positional arguments
-        parser.add_argument('--jiebaDict', type=str, required=True)
-        parser.add_argument('--stopword', type=str, required=True)
-        parser.add_argument('--dimension', type=int, required=True)
+        parser.add_argument('--dimension', type=int, default=400)
         parser.add_argument(
             '--ontology',
             default=False,
@@ -201,9 +185,9 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        # 1) jieba customized dictionary 2) stopwords text file 3) dimension of the model to be trained
-        # obj = build('jieba_dict/dict.txt.big.txt', 'jieba_dict/stopwords.txt', 400) # examples 
-        obj = build(options['ontology'], options['jiebaDict'], options['stopword'], options['dimension'])
+        # 1) dimension of the model to be trained
+        # obj = build(400) # examples 
+        obj = build(options['ontology'], options['dimension'])
         obj.exec()
 
         self.stdout.write(self.style.SUCCESS('build kem model success!!!'))
