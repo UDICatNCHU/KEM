@@ -8,10 +8,11 @@ class KEM(object):
     the database(fast), and only do the gensim built-in query function when the query term is not
     in the database(slow).
     """
-    def __init__(self, uri, model_path = './med400.model.bin'):
+    def __init__(self, uri):
         from ngram import NGram
         import gensim
-        self.model = gensim.models.keyedvectors.KeyedVectors.load_word2vec_format(model_path, binary=True)
+        from udic_nlp_API.settings import W2VMODEL
+        self.model = W2VMODEL
 
         # ngram search
         self.modelNgram = NGram(self.model.wv.vocab.keys())
@@ -41,12 +42,7 @@ class KEM(object):
         return {'key':keyword, 'value':result}
 
 if __name__ == '__main__':
-    import json
-    """
-    due to the base directory settings of django, the model_path needs to be different when
-    testing with this section.
-    """
     import sys
-    obj = KEM('mongodb://140.120.13.244:7777/', model_path = './med400.model.bin')
+    obj = KEM('mongodb://140.120.13.244:7777/')
     temp = obj.most_similar(sys.argv[1], 100)
     print(temp)
