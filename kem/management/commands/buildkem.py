@@ -1,7 +1,6 @@
 # author: Shane Yu  date: April 8, 2017
 from django.core.management.base import BaseCommand, CommandError
 import subprocess, logging, json, multiprocessing, jieba
-from kcem.utils.utils import model as w2vModel
 from udic_nlp_API.settings_database import uri
 from udicOpenData.dictionary import *
 from udicOpenData.stopwords import *
@@ -67,6 +66,7 @@ class build(object):
     def keyword2entity(self):
         from collections import defaultdict
         import pyprind, math, pymongo, threading
+        from udic_nlp_API.settings import W2VMODEL
         self.Collect = pymongo.MongoClient(uri)['nlp']['kcem']
         # 判断一个unicode是否是汉字
         def is_chinese(keyword):
@@ -78,7 +78,7 @@ class build(object):
             return True
 
         # 需要實驗才知道，哪些單字需要透過kcem做轉換
-        ConvertKeywordSet = {i for i in w2vModel.vocab.keys() if is_chinese(i)}
+        ConvertKeywordSet = {i for i in W2VMODEL.vocab.keys() if is_chinese(i)}
         threadLock = threading.Lock()
 
         def convert2KCEM(InvertedIndexList):
