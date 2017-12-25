@@ -10,7 +10,6 @@ class KEM(object):
     """
     def __init__(self, uri):
         from ngram import NGram
-        import gensim
         from udic_nlp_API.settings import W2VMODEL
         self.model = W2VMODEL
 
