@@ -14,7 +14,7 @@ class KEM(object):
         self.model = W2VMODEL
 
         # ngram search
-        self.modelNgram = NGram(self.model.wv.vocab.keys())
+        self.kemNgram = NGram(self.model.wv.vocab.keys())
 
     def most_similar(self, keyword, num):
         """
@@ -23,18 +23,19 @@ class KEM(object):
         """
         try:
             result = self.model.most_similar(keyword, topn = num) # most_similar return a list
+            return {'key':keyword, 'value':result, 'similarity':1}
         except KeyError as e:
-            keyword = self.modelNgram.find(keyword)
-            if keyword == None:
-                return {}
-            result = self.model.most_similar(keyword, topn = num)
-        return {'key':keyword, 'value':result}
+            kemKeyword = self.kemNgram.find(keyword)
+            if kemKeyword:
+                result = self.model.most_similar(kemKeyword, topn = num)
+                return {'key':kemKeyword, 'value':result, 'similarity':self.kemNgram.compare(kemKeyword, keyword)}
+            return {'key':keyword, 'value':[], 'similarity':0}
 
     def getVect(self, keyword):
         try:
             result = self.model[keyword].tolist()
         except KeyError as e:
-            keyword = self.modelNgram.find(keyword)
+            keyword = self.kemNgram.find(keyword)
             if keyword == None:
                 return [0]*400
             result = self.model[keyword].tolist()
