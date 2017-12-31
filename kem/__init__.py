@@ -41,6 +41,25 @@ class KEM(object):
             result = self.model[keyword].tolist()
         return {'key':keyword, 'value':result}
 
+    def similarity(self, k1, k2):
+        try:
+            similarity = self.model.similarity(k1, k2)
+            return {'k1': k1, 'k2':k2, 'similarity':similarity, 'k1Similarity':1, 'k2Similarity':1}
+        except KeyError as e:
+            if k1 not in self.kemNgram and k2 not in self.kemNgram:
+                k1Ngram = self.kemNgram.find(k1)
+                k2Ngram = self.kemNgram.find(k2)
+                similarity = self.model.similarity(k1Ngram, k2Ngram)
+                return {'k1': k1Ngram, 'k2':k2Ngram, 'similarity':similarity, 'k1Similarity':self.kemNgram.compare(k1, k1Ngram), 'k2Similarity': self.kemNgram.compare(k2, k2Ngram)}                
+            elif k1 not in self.kemNgram:
+                k1Ngram = self.kemNgram.find(k1)
+                similarity = self.model.similarity(k1Ngram, k2)
+                return {'k1': k1Ngram, 'k2':k2, 'similarity':similarity, 'k1Similarity':self.kemNgram.compare(k1, k1Ngram), 'k2Similarity': 1}
+            else:
+                k2Ngram = self.kemNgram.find(k2)
+                similarity = self.model.similarity(k1, k2Ngram)
+                return {'k1': k1, 'k2':k2Ngram, 'similarity':similarity, 'k1Similarity':1, 'k2Similarity': self.kemNgram.compare(k2, k2Ngram)}
+
 if __name__ == '__main__':
     import sys
     obj = KEM('mongodb://140.120.13.244:7777/')

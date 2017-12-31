@@ -21,3 +21,8 @@ def vector(request):
 	result = obj.getVect(keyword)
 	return JsonResponse(result, safe=False)
 
+@queryString_required(['k1', 'k2'])
+def similarity(request):
+    k1, k2 = request.GET['k1'], request.GET['k2']
+    result = obj.similarity(k1, k2)
+    return JsonResponse(result, safe=False)
