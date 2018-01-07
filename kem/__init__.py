@@ -34,12 +34,13 @@ class KEM(object):
     def getVect(self, keyword):
         try:
             result = self.model[keyword].tolist()
+            return {'key':keyword, 'value':result, 'similarity':1}
         except KeyError as e:
-            keyword = self.kemNgram.find(keyword)
-            if keyword == None:
-                return [0]*400
-            result = self.model[keyword].tolist()
-        return {'key':keyword, 'value':result}
+            kemKeyword = self.kemNgram.find(keyword)
+            if kemKeyword:
+                result = self.model[kemKeyword].tolist()
+                return {'key':kemKeyword, 'value':result, 'similarity':self.kemNgram.compare(kemKeyword, keyword)}
+            return {'key':keyword, 'value':[0]*400, 'similarity':0}
 
     def similarity(self, k1, k2):
         try:
