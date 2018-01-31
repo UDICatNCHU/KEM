@@ -61,7 +61,7 @@ class KEM(object):
                     k2Ngram = self.kemNgram.find(k2)
                     similarity = self.model.similarity(k1, k2Ngram)
                     return {'k1': k1, 'k2':k2Ngram, 'similarity':similarity, 'k1Similarity':1, 'k2Similarity': self.kemNgram.compare(k2, k2Ngram)}
-            except Exception as e:
+            except KeyError as e:
                 return {}
 
 if __name__ == '__main__':
