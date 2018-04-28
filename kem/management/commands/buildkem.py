@@ -16,27 +16,21 @@ class build(object):
 
     ps. An extra directiory will be created during the process.
     """
-    def __init__(self, ontology, dimension):
-        self.ontology = ontology
+    def __init__(self, lang, wiki_dir_name, dimension, ontology=False):
+        self.lang = lang
+        self.wiki_dir_name = wiki_dir_name
         self.dimension = dimension
+        self.ontology = ontology
         self.keyword2entityList = []
-
-    def creatBuildDir(self):
-        subprocess.call(['mkdir', 'build'])
-
-
-    def getWiki(self):
-        subprocess.call(['wget', 'https://dumps.wikimedia.org/zhwiki/latest/zhwiki-latest-pages-articles.xml.bz2', '-P', './build/'])
-
 
     def wikiToTxt(self):
         # This function takes about 25 minutes
         from gensim.corpora import WikiCorpus
 
-        wiki_corpus = WikiCorpus('./build/zhwiki-latest-pages-articles.xml.bz2', dictionary={})
+        wiki_corpus = WikiCorpus(os.path.join(self.wiki_dir_name, '{}wiki-latest-pages-articles.xml.bz2'.format(self.lang)), dictionary={})
         
         texts_num = 0
-        with open('./build/wiki_texts.txt', 'w', encoding='utf-8') as output:
+        with open(os.path.join(self.wiki_dir_name, 'wiki_texts.txt'), 'w', encoding='utf-8') as output:
             for text in wiki_corpus.get_texts():
                 output.write(' '.join(text) + '\n')
                 texts_num += 1
@@ -45,16 +39,16 @@ class build(object):
 
 
     def opencc(self):
-        subprocess.call(['opencc', '-i', './build/wiki_texts.txt', '-o', './build/wiki_zh_tw.txt'])
+        subprocess.call(['opencc', '-i', os.path.join(self.wiki_dir_name, 'wiki_texts.txt'), '-o', os.path.join(self.wiki_dir_name, 'wiki_{}_tw.txt'.format(self.lang))])
 
     def segmentation(self):
         # takes about 30 minutes
 
-        output = open('./build/wiki_seg.txt', 'w')
+        output = open(os.path.join(self.wiki_dir_name, 'wiki_seg.txt'), 'w')
         
         texts_num = 0
         
-        with open('./build/wiki_zh_tw.txt','r') as content :
+        with open(os.path.join(self.wiki_dir_name, 'wiki_{}_tw.txt'.format(self.lang)),'r') as content :
             for line in content:
                 for word in rmsw(line):
                     output.write(word +' ')
@@ -105,15 +99,15 @@ class build(object):
             threadLock.release()
 
 
-        with open('./build/wiki_seg.txt', 'r') as f:
+        with open(os.path.join(self.wiki_dir_name, 'wiki_seg.txt'), 'r') as f:
             text = f.read().split()
             try:
-                invertedIndex = json.load(open('./build/invertedIndex.json', 'r'))
+                invertedIndex = json.load(open(os.path.join(self.wiki_dir_name, 'invertedIndex.json'), 'r'))
             except Exception as e:
                 invertedIndex = defaultdict(list)
                 for index, word in pyprind.prog_bar(list(enumerate(text))):
                     invertedIndex[word].append(index)
-                json.dump(invertedIndex, open('./build/invertedIndex.json', 'w'))
+                json.dump(invertedIndex, open(os.path.join(self.wiki_dir_name, 'invertedIndex.json'), 'w'))
 
             invertedIndexItem = list(invertedIndex.items())
             step = math.ceil(len(invertedIndexItem)/multiprocessing.cpu_count())
@@ -136,7 +130,7 @@ class build(object):
             for index in indexList:
                 textList[index] = keyword
         wiki_string = ' '.join(textList)
-        with open('./build/wiki_seg_replace.txt','w', encoding='utf-8') as f:
+        with open(os.path.join(self,wiki_dir_name, 'wiki_seg_replace.txt'),'w', encoding='utf-8') as f:
             f.write(wiki_string)
 
     def train(self):
@@ -144,20 +138,19 @@ class build(object):
 
         if self.ontology:
             # 使用ontology的實驗性功能，去建立word2vec
-            sentences = word2vec.Text8Corpus('./build/wiki_seg_replace.txt')
+            sentences = word2vec.Text8Corpus(os.path.join(self.wiki_dir_name, 'wiki_seg_replace.txt'))
         else:
             # 正常版的word2vec
-            sentences = word2vec.Text8Corpus('./build/wiki_seg.txt')
+            sentences = word2vec.Text8Corpus(os.path.join(self.wiki_dir_name, 'wiki_seg.txt'))
 
         model = word2vec.Word2Vec(sentences, size=self.dimension, workers=multiprocessing.cpu_count())
 
         # Save our model.
-        model.wv.save_word2vec_format('./med{}.model.bin'.format(str(self.dimension)), binary=True)
+        model.wv.save_word2vec_format('./med{}.model.bin.{}'.format(str(self.dimension), self.lang), binary=True)
 
 
     def exec(self):
         print('========================== 開始下載wiki壓縮檔 ==========================')
-        self.getWiki()
         print('========================== wiki壓縮檔下載完畢，開始將壓縮檔轉成文字檔 ==========================')
         self.wikiToTxt()
         print('========================== 壓縮檔轉文字檔過程完畢，開始繁轉簡過程 ==========================')
@@ -183,11 +176,26 @@ class Command(BaseCommand):
             type=bool,
             help='use Ontology result to rebuild word2vec to extract relations and axioms',
         )
+        parser.add_argument('--lang', type=str)
 
     def handle(self, *args, **options):
+        def getWikiData():
+            wiki_dir_name = 'Wikipedia'
+            wiki_json_dir = 'wikijson'
+
+            subprocess.call(['mkdir', wiki_dir_name])
+            subprocess.call(['mkdir', wiki_json_dir])
+            lang = options['lang']
+            url = 'https://dumps.wikimedia.org/{}wiki/latest/{}wiki-latest-pages-articles.xml.bz2'.format(lang, lang)
+            if not os.path.exists(os.path.join(wiki_dir_name, '{}wiki-latest-pages-articles.xml.bz2'.format(lang))):
+                subprocess.call(['wget', url,'-P', wiki_dir_name])
+                subprocess.call(['WikiExtractor.py', os.path.join(wiki_dir_name, '{}wiki-latest-pages-articles.xml.bz2'.format(lang)), '-o', wiki_json_dir, '--json'])
+            return wiki_dir_name, wiki_json_dir, lang
+
+        wiki_dir_name, wiki_json_dir, lang = getWikiData()
         # 1) dimension of the model to be trained
         # obj = build(400) # examples 
-        obj = build(options['ontology'], options['dimension'])
+        obj = build(lang, wiki_dir_name, options['dimension'], options['ontology'])
         obj.exec()
 
         self.stdout.write(self.style.SUCCESS('build kem model success!!!'))
