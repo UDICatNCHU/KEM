@@ -1,5 +1,7 @@
 # author: Shane Yu  date: April 8, 2017
 # author: Chang Tai-Wei  date: April 8, 2017
+import gensim
+from ngram import NGram
 
 class KEM(object):
     """
@@ -8,10 +10,8 @@ class KEM(object):
     the database(fast), and only do the gensim built-in query function when the query term is not
     in the database(slow).
     """
-    def __init__(self, uri):
-        from ngram import NGram
-        from udic_nlp_API.settings import W2VMODEL
-        self.model = W2VMODEL
+    def __init__(self, lang, uri):
+        self.model = gensim.models.KeyedVectors.load_word2vec_format('med400.model.bin.{}'.format(lang), binary=True)
 
         # ngram search
         self.kemNgram = NGram(self.model.wv.vocab.keys())
