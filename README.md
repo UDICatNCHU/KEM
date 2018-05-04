@@ -1,46 +1,24 @@
 # KEM
 
-訓練Word2Vec model參考文章：[以 gensim 訓練中文詞向量](http://zake7749.github.io/2016/08/28/word2vec-with-gensim/)
+[reference](http://zake7749.github.io/2016/08/28/word2vec-with-gensim/)
 
-## Get Started
+## Install
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
+* (Recommended): Use [docker-compose](https://github.com/udicatnchu/udic-nlp-api) to install
 
-### Prerequisities
 
-Ubuntu需要先安裝：
+## Manually Install
 
-`sudo pip install virtualenv`
+* You can also install kem manually, and setup config listed below: `pip install kem`
+* If you want to integrate `kem` into your own django project, use manually install.
 
-## Installing
+### Config
+Cause this is a django app
 
-1. `pip install kem`
-
-## Run
-#### Building the model  
-使用api前必須先建立model  
-停用詞以及結巴斷詞的字典在這邊  
-
-> 1. 結巴字典：格式是txt, 在 [Open-Sentiment-Training-Data](https://github.com/UDICatNCHU/Open-Sentiment-Training-Data)當中，有數份字典
-可以依需求將字典合併成一份後再去斷詞，效果會不同。  
-> 2. 停用詞：有在停用詞裏面的單字會被當作冗詞贅字給濾掉，在此應用中只需要拿 [stopwrds](https://github.com/UDICatNCHU/Open-Sentiment-Training-Data/tree/master/stopwrds)裏面的stopwrds.json即可
-
-1. command:
-```
-usage: manage.py buildkem  [--jiebaDict JIEBADICT] [--stopword STOPWORD] 
-                           [--dimension DIMENSION] [--ontology ONTOLOGY]
-```
-* args:
-  * jiebaDict:結巴自訂字典
-  * stopword:停用詞(是否開啟ontology模式)
-  * dimension:欲訓練model之維度(目前是400維，維度愈大檔案愈大)
-  * ontology:是否開啟ontology模式
-
-#### Usage of KEM class  
-因為KEM是一個django的函式庫，所以需要設定urls.py以及vies.py  
-並且在settings.py INSTALLED_APPS 新增kem喔
+so need to finish these django setups.
 
 1. settings.py：
+
   ```
   INSTALLED_APPS = [
       'kem'
@@ -48,7 +26,7 @@ usage: manage.py buildkem  [--jiebaDict JIEBADICT] [--stopword STOPWORD]
   ]
   ```
 2. urls.py：  
-在專案的urls.py引入函式庫的urls.py即可使用該api  
+
   ```
   import kem.urls
   urlpatterns += [
@@ -56,9 +34,12 @@ usage: manage.py buildkem  [--jiebaDict JIEBADICT] [--stopword STOPWORD]
   ]
   ```
 
+### Building the model  
+
+command: `python3 manage.py buildkem --lang <lang, e.g., zh or en or th> --dimension <int: e.g., 400>`
 
 ## API
-1. 取得字的向量：_`/kem`_
+1. get similar word:_`/kem`_
   - keyword
   - num
   - example：[http://udiclab.cs.nchu.edu.tw/kem?keyword=草履蟲&num=100](http://udiclab.cs.nchu.edu.tw/kem?keyword=草履蟲&num=100)
@@ -88,7 +69,7 @@ usage: manage.py buildkem  [--jiebaDict JIEBADICT] [--stopword STOPWORD]
   etc
   ```
 
-2. 取得字的向量：_`/kem/vector`_
+2. get vector：_`/kem/vector`_
 
   - keyword
   - example： [http://udiclab.cs.nchu.edu.tw/kem/vector?keyword=女生](http://udiclab.cs.nchu.edu.tw/kem/vector?keyword=女生)
