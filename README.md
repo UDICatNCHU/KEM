@@ -41,7 +41,7 @@ command: `python3 manage.py buildkem --lang <lang, e.g., zh or en or th> --dimen
 ## API
 1. get similar word:_`/kem`_
   - keyword
-  - num
+  - num (default=10)
   - example：[http://udiclab.cs.nchu.edu.tw/kem?keyword=草履蟲&num=100](http://udiclab.cs.nchu.edu.tw/kem?keyword=草履蟲&num=100)
 
   ```
