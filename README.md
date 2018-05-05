@@ -1,5 +1,9 @@
 # KEM
 
+AKA word2vec, but our [nlp suite](https://github.com/udicatnchu/udic-nlp-api) all starts with prefix "k"
+
+so named it as KEM, keyword embedding model.
+
 [reference](http://zake7749.github.io/2016/08/28/word2vec-with-gensim/)
 
 ## Install
@@ -9,8 +13,9 @@
 
 ## Manually Install
 
-* You can also install kem manually, and setup config listed below: `pip install kem`
-* If you want to integrate `kem` into your own django project, use manually install.
+If you want to integrate `kem` into your own django project, use manually install.
+
+* `pip install kem`
 
 ### Config
 Cause this is a django app
@@ -33,10 +38,8 @@ so need to finish these django setups.
       url(r'^kem/', include(kem.urls))
   ]
   ```
-
-### Building the model  
-
-command: `python3 manage.py buildkem --lang <lang, e.g., zh or en or th> --dimension <int: e.g., 400>`
+3. `python3 manage.py buildkem --lang <lang, e.g., zh or en or th> --dimension <int: e.g., 400>`
+4. fire `python manage.py runserver` and go `127.0.0.1:8000/` to check whether the config is all ok.
 
 ## API
 1. get similar word:_`/kem`_
@@ -80,7 +83,7 @@ command: `python3 manage.py buildkem --lang <lang, e.g., zh or en or th> --dimen
 
 ## Built With
 
-python3.4
+python3.5
 
 ## Contributors
 * __張泰瑋__ [david](https://github.com/david30907d)
