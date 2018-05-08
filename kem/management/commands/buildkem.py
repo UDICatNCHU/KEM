@@ -35,28 +35,24 @@ class build(object):
 				output.write(' '.join(text) + '\n')
 				texts_num += 1
 				if texts_num % 10000 == 0:
-					logging.info("已處理 %d 篇文章" % texts_num)
-
-
-	def opencc(self):
-		subprocess.call(['opencc', '-i', os.path.join(self.wiki_dir_name, 'wiki_texts.txt'), '-o', os.path.join(self.wiki_dir_name, 'wiki_{}.txt'.format(self.lang))])
+					logging.info("already processed %d articles" % texts_num)
 
 	def segmentation(self):
-		# takes about 30 minutes
-
-		output = open(os.path.join(self.wiki_dir_name, 'wiki_seg_{}.txt'.format(self.lang)), 'w')
-		
-		texts_num = 0
-		
-		with open(os.path.join(self.wiki_dir_name, 'wiki_{}.txt'.format(self.lang)),'r') as articles:
-			for article in articles:
-				for word in rmsw(article):
-					output.write(word +' ')
-				output.write('\n')
-				texts_num += 1
-				if texts_num % 10000 == 0:
-					logging.info("已完成前 %d 行的斷詞" % texts_num)
-		output.close()
+		if self.lang == 'zh':
+			# use opencc to translate chinese from simplified to tranditional
+			subprocess.call(['opencc', '-i', os.path.join(self.wiki_dir_name, 'wiki_texts.txt'), '-o', os.path.join(self.wiki_dir_name, 'wiki_{}.txt'.format(self.lang))])
+			# jieba segmentaion
+			# takes about 30 minutes
+			output = open(os.path.join(self.wiki_dir_name, 'wiki_seg_{}.txt'.format(self.lang)), 'w')
+			
+			with open(os.path.join(self.wiki_dir_name, 'wiki_{}.txt'.format(self.lang)),'r') as articles:
+				for texts_num, article in enumerate(articles):
+					for word in rmsw(article):
+						output.write(word +' ')
+					output.write('\n')
+					if texts_num % 10000 == 0:
+						logging.info("Finish segmentation of line No.%d " % texts_num)
+			output.close()
 
 	def keyword2entity(self):
 		from collections import defaultdict
@@ -94,7 +90,7 @@ class build(object):
 					entity = self.Collect.find({'key':key}, {'value':1, '_id':False}).limit(1)
 					print(list(entity), pair, index)
 				if index % 100 == 0:
-					logging.info("已處理 %d 個單子" % index)
+					logging.info("already processed %d keywords" % index)
 			threadLock.acquire()
 			self.keyword2entityList += InvertedIndexList
 			threadLock.release()
@@ -138,10 +134,10 @@ class build(object):
 		from gensim.models import word2vec
 
 		if self.ontology:
-			# 使用ontology的實驗性功能，去建立word2vec
+			# Experimental function, use ontology to build new word2vec.
 			sentences = word2vec.Text8Corpus(os.path.join(self.wiki_dir_name, 'wiki_seg_replace.txt'))
 		else:
-			# 正常版的word2vec
+			# normal process of building word2vec model
 			sentences = word2vec.Text8Corpus(os.path.join(self.wiki_dir_name, 'wiki_seg_{}.txt'.format(self.lang)))
 
 		model = word2vec.Word2Vec(sentences, size=self.dimension, workers=multiprocessing.cpu_count())
@@ -151,19 +147,16 @@ class build(object):
 
 
 	def exec(self):
-		print('========================== 開始下載wiki壓縮檔 ==========================')
-		print('========================== wiki壓縮檔下載完畢，開始將壓縮檔轉成文字檔 ==========================')
+		print('========================== Extract Wiki Dump ==========================')
 		self.wikiToTxt()
-		print('========================== 壓縮檔轉文字檔過程完畢，開始繁轉簡過程 ==========================')
-		self.opencc()
-		print('========================== 繁轉簡過程完畢，開始斷詞 ==========================')
+		print('========================== Do Segmentation ==========================')
 		self.segmentation()
-		print('========================== 斷詞完畢，開始訓練model ==========================')
+		print('========================== Start Training ==========================')
 		if self.ontology:
 			self.keyword2entity()
-			print('========================== 用kcem把單子轉成entity ==========================')
+			print('========================== [Experimental Feature] Use kcem to replace keywords into hypernym before training ==========================')
 		self.train()
-		print('========================== ' + str(self.dimension) + '維model訓練完畢，model存放在當前目錄 ==========================')
+		print('========================== Finish Training: ' + str(self.dimension) + ' Dimensions ==========================')
 
 class Command(BaseCommand):
 	help = 'use this for build model of KEM!'
@@ -181,19 +174,17 @@ class Command(BaseCommand):
 
 	def handle(self, *args, **options):
 		def getWikiData():
-			wiki_dir_name = 'Wikipedia'
-			wiki_json_dir = 'wikijson'
+			print('========================== Download Wiki Dump ==========================')			
+			lang = options['lang']
+			wiki_dir_name = 'Wikipedia_{}'.format(lang)
 
 			subprocess.call(['mkdir', wiki_dir_name])
-			subprocess.call(['mkdir', wiki_json_dir])
-			lang = options['lang']
 			url = 'https://dumps.wikimedia.org/{}wiki/latest/{}wiki-latest-pages-articles.xml.bz2'.format(lang, lang)
 			if not os.path.exists(os.path.join(wiki_dir_name, '{}wiki-latest-pages-articles.xml.bz2'.format(lang))):
 				subprocess.call(['wget', url,'-P', wiki_dir_name])
-				subprocess.call(['WikiExtractor.py', os.path.join(wiki_dir_name, '{}wiki-latest-pages-articles.xml.bz2'.format(lang)), '-o', wiki_json_dir, '--json'])
-			return wiki_dir_name, wiki_json_dir, lang
+			return wiki_dir_name, lang
 
-		wiki_dir_name, wiki_json_dir, lang = getWikiData()
+		wiki_dir_name, lang = getWikiData()
 		# 1) dimension of the model to be trained
 		# obj = build(400) # examples 
 		obj = build(lang, wiki_dir_name, options['dimension'], options['ontology'])
