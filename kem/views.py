@@ -5,7 +5,7 @@ from kem import *
 from udic_nlp_API.settings_database import uri
 
 multilanguage_model = {
-	'zh': KEM('zh', uri=uri)
+	'zh': KEM('zh', uri=uri, ngram=True)
 }
 
 @queryString_required(['lang', 'keyword'])

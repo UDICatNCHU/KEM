@@ -10,11 +10,12 @@ class KEM(object):
     the database(fast), and only do the gensim built-in query function when the query term is not
     in the database(slow).
     """
-    def __init__(self, lang, uri):
+    def __init__(self, lang, uri, ngram=False):
         self.model = gensim.models.KeyedVectors.load_word2vec_format('med400.model.bin.{}'.format(lang), binary=True)
 
-        # ngram search
-        self.kemNgram = NGram(self.model.wv.vocab.keys())
+        if ngram:
+            # ngram search
+            self.kemNgram = NGram(self.model.wv.vocab.keys())
 
     def most_similar(self, keyword, num):
         """
