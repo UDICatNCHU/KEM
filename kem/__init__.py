@@ -11,10 +11,7 @@ class KEM(object):
     in the database(slow).
     """
     def __init__(self, lang, uri, ngram=False, ontology=False):
-        if ontology:
-            self.model = gensim.models.KeyedVectors.load_word2vec_format('med400.model.bin.{}.True'.format(lang), binary=True)
-        else:
-            self.model = gensim.models.KeyedVectors.load_word2vec_format('med400.model.bin.{}'.format(lang), binary=True)
+        self.model = gensim.models.KeyedVectors.load_word2vec_format('med400.model.bin.{}.{}'.format(lang, str(ontology)), binary=True)
 
         if ngram:
             # ngram search
