@@ -10,8 +10,11 @@ class KEM(object):
     the database(fast), and only do the gensim built-in query function when the query term is not
     in the database(slow).
     """
-    def __init__(self, lang, uri, ngram=False):
-        self.model = gensim.models.KeyedVectors.load_word2vec_format('med400.model.bin.{}'.format(lang), binary=True)
+    def __init__(self, lang, uri, ngram=False, ontology=False):
+        if ontology:
+            self.model = gensim.models.KeyedVectors.load_word2vec_format('med400.model.bin.{}.True'.format(lang), binary=True)
+        else:
+            self.model = gensim.models.KeyedVectors.load_word2vec_format('med400.model.bin.{}'.format(lang), binary=True)
 
         if ngram:
             # ngram search
