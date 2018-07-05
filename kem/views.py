@@ -3,6 +3,7 @@ from django.http import JsonResponse
 from djangoApiDec.djangoApiDec import queryString_required
 from kem import *
 from udic_nlp_API.settings_database import uri
+import json
 
 multilanguage_model = {
 	'zh': {
@@ -19,7 +20,7 @@ def kem(request):
 	"""
 	keyword = request.GET['keyword']
 	lang = request.GET['lang']
-	ontology = 'ontology' if 'ontology' in request.GET else 'origin'
+	ontology = 'ontology' if 'ontology' in request.GET and bool(json.loads(request.GET['ontology'].lower())) else 'origin'
 	result = multilanguage_model[lang][ontology].most_similar(keyword, int(request.GET['num']) if 'num' in request.GET else 10)
 	return JsonResponse(result, safe=False)
 
