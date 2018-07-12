@@ -54,6 +54,16 @@ class BuildKem(object):
 				texts_num += 1
 				if texts_num % 10000 == 0:
 					logging.info("already processed %d articles" % texts_num)
+	# Yang, 2018/07/06
+	def load_en_stopwords(self):
+		en_sw_path = os.path.join(self.wiki_dir_name, 'stopwords-en', 'stopwords-en.json')
+		with open(en_sw_path, 'r') as file:
+			stopwords = json.load(file)
+		return stopwords
+	
+	# Yang, 2018/07/06
+	def hasNumbers(self, inputString):
+    	return any(char.isdigit() for char in inputString)
 
 	def segmentation(self):
 		if os.path.exists(self.wiki_seg):
@@ -83,6 +93,23 @@ class BuildKem(object):
 						output.write('\n')
 						if texts_num % 10000 == 0:
 							logging.info("Finish segmentation of line No.%d " % texts_num)
+			# Yang, 2017/07/09
+			elif self.lang == 'en':
+				import re
+				import nltk
+				nltk.download('punkt')
+				from nltk.tokenize import word_tokenize
+				stopwords = self.load_en_stopwords()
+				with open(self.wiki_texts,'r', encoding='utf-8') as articles:
+					for texts_num, article in enumerate(articles):
+						for word in word_tokenize(article):
+							word = re.sub(r'[^a-zA-Z0-9 -]', '', word)
+							if word and not self.hasNumbers(word) and word not in stopwords:
+								output.write(word +' ')
+						output.write('\n')
+						if texts_num % 10000 == 0:
+							logging.info("Finish segmentation of line No.%d " % texts_num)
+
 
 
 	def keyword2hypernym(self):

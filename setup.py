@@ -17,7 +17,8 @@ setup(
     install_requires=[
         'simplejson',
         'gensim',
-        'ngram'
+        'ngram',
+        'nltk'
     ],
     zip_safe=True,
 )

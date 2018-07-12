@@ -9,6 +9,10 @@ multilanguage_model = {
 	'zh': {
 		'origin':KEM('zh', uri=uri, ngram=True),
 		'ontology':KEM('zh', uri=uri, ngram=True, ontology=True)
+	},
+	'en': {
+		'origin':KEM('en', uri=uri, ngram=True),
+		'ontology':KEM('en', uri=uri, ngram=True, ontology=False)
 	}
 }
 
