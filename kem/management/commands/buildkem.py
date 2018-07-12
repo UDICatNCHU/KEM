@@ -63,7 +63,7 @@ class BuildKem(object):
 	
 	# Yang, 2018/07/06
 	def hasNumbers(self, inputString):
-    	return any(char.isdigit() for char in inputString)
+		return any(char.isdigit() for char in inputString)
 
 	def segmentation(self):
 		if os.path.exists(self.wiki_seg):
@@ -97,12 +97,18 @@ class BuildKem(object):
 			elif self.lang == 'en':
 				import re
 				import nltk
+				from nltk import ne_chunk, pos_tag, word_tokenize
 				nltk.download('punkt')
-				from nltk.tokenize import word_tokenize
+				nltk.download('averaged_perceptron_tagger')
+				nltk.download('maxent_ne_chunker')
+				nltk.download('words')
+				
 				stopwords = self.load_en_stopwords()
-				with open(self.wiki_texts,'r', encoding='utf-8') as articles:
+				with open(self.wiki_texts, 'r', encoding='utf-8') as articles:
 					for texts_num, article in enumerate(articles):
-						for word in word_tokenize(article):
+						chunks = ne_chunk(pos_tag(word_tokenize(article)))
+						words = [w[0] if isinstance(w, tuple) else ' '.join(t[0] for t in w) for w in chunks]
+						for word in words:
 							word = re.sub(r'[^a-zA-Z0-9 -]', '', word)
 							if word and not self.hasNumbers(word) and word not in stopwords:
 								output.write(word +' ')
