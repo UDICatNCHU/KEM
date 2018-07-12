@@ -12,7 +12,7 @@ multilanguage_model = {
 	},
 	'en': {
 		'origin':KEM('en', uri=uri, ngram=True),
-		'ontology':KEM('en', uri=uri, ngram=True, ontology=False)
+		'ontology':KEM('en', uri=uri, ngram=True, ontology=True)
 	}
 }
 
