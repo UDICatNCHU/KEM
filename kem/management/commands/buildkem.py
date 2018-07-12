@@ -93,7 +93,7 @@ class BuildKem(object):
 						output.write('\n')
 						if texts_num % 10000 == 0:
 							logging.info("Finish segmentation of line No.%d " % texts_num)
-			# Yang, 2017/07/09
+			# Yang, 2017/07/12
 			elif self.lang == 'en':
 				import re
 				import nltk
