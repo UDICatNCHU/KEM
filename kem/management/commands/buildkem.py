@@ -2,7 +2,7 @@
 from django.core.management.base import BaseCommand, CommandError
 import subprocess, logging, json, os, math
 from udic_nlp_API.settings_database import uri
-from udicOpenData.stopwords import rmsw
+from udicOpenData.stopwords import rmsw, rmsw_en
 import multiprocessing as mp
 from kcem.apps import KCEM
 
@@ -54,16 +54,6 @@ class BuildKem(object):
 				texts_num += 1
 				if texts_num % 10000 == 0:
 					logging.info("already processed %d articles" % texts_num)
-	# Yang, 2018/07/06
-	def load_en_stopwords(self):
-		en_sw_path = os.path.join(self.wiki_dir_name, 'stopwords-en', 'stopwords-en.json')
-		with open(en_sw_path, 'r') as file:
-			stopwords = json.load(file)
-		return stopwords
-	
-	# Yang, 2018/07/06
-	def hasNumbers(self, inputString):
-		return any(char.isdigit() for char in inputString)
 
 	def segmentation(self):
 		if os.path.exists(self.wiki_seg):
@@ -95,28 +85,13 @@ class BuildKem(object):
 							logging.info("Finish segmentation of line No.%d " % texts_num)
 			# Yang, 2017/07/12
 			elif self.lang == 'en':
-				import re
-				import nltk
-				from nltk import ne_chunk, pos_tag, word_tokenize
-				nltk.download('punkt')
-				nltk.download('averaged_perceptron_tagger')
-				nltk.download('maxent_ne_chunker')
-				nltk.download('words')
-				
-				stopwords = self.load_en_stopwords()
 				with open(self.wiki_texts, 'r', encoding='utf-8') as articles:
 					for texts_num, article in enumerate(articles):
-						chunks = ne_chunk(pos_tag(word_tokenize(article)))
-						words = [w[0] if isinstance(w, tuple) else ' '.join(t[0] for t in w) for w in chunks]
-						for word in words:
-							word = re.sub(r'[^a-zA-Z0-9 -]', '', word)
-							if word and not self.hasNumbers(word) and word not in stopwords:
-								output.write(word +' ')
+						for word in rmsw_en(article):
+							output.write(word +' ')
 						output.write('\n')
 						if texts_num % 10000 == 0:
 							logging.info("Finish segmentation of line No.%d " % texts_num)
-
-
 
 	def keyword2hypernym(self):
 		if os.path.exists(self.wiki_seg_kcem):
