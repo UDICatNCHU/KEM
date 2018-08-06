@@ -163,7 +163,7 @@ class BuildKem(object):
 
 		# Save our model.
 		model.wv.save_word2vec_format('./med{}.model.bin.{}.{}'.format(str(self.dimension), self.lang, str(self.ontology)), binary=True)
-
+		pickle.dump(Ngram(model.wv.vocab.keys()), open('kemNgram.{}.pkl'.format(self.lang), 'wb'))
 
 	def main(self):
 		print('========================== Download Wiki Dump ==========================')			

@@ -1,21 +1,18 @@
 # author: Shane Yu  date: April 8, 2017
 # author: Chang Tai-Wei  date: April 8, 2017
+import pickle
 import gensim
 from ngram import NGram
 
 class KEM(object):
-    """
-    KEM class uses MongoDB as a cache to accelerate the process of querying kem model,
-    most_similar() function returns a list of query result from MongoDB if the query term exists in
-    the database(fast), and only do the gensim built-in query function when the query term is not
-    in the database(slow).
-    """
     def __init__(self, lang, uri, ngram=False, ontology=False):
-        self.model = gensim.models.KeyedVectors.load_word2vec_format('med400.model.bin.{}.{}'.format(lang, str(ontology)), binary=True)
+        self.model = gensim.models.KeyedVectors.load_word2vec_format('med400.model.bin.{}.{}'.format(lang, str(ontology)), binary=True).wv
 
         if ngram:
-            # ngram search
-            self.kemNgram = NGram(self.model.wv.vocab.keys())
+            try:
+                self.kemNgram = pickle.load(open('kemNgram.{}.pkl'.format(self.lang), 'rb'))
+            except FileNotFoundError as e:
+                print(str(e)+', if this happened in building steps, then ignore it!')
 
     def most_similar(self, keyword, num):
         """
