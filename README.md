@@ -153,6 +153,17 @@ origin:
 ]
 ```
 
+壓縮後的model
+
+Pearson correlation coefficient 有 0.7
+
+```python
+a = [compress.similarity('張飛', '本多忠勝'), compress.similarity('呂布', '本多忠勝'), compress.similarity('福爾摩斯改編電視劇', '狄仁傑題材電視劇'), compress.similarity('美國隊長', '蝙蝠俠'), compress.similarity('吾命騎士', '哈利波特'), compress.similarity('羅瑩雪', '金正恩')]
+b = [compress.similarity('蜀漢軍事人物', '戰國武將'), compress.similarity('三國志立傳人物', '戰國武將'), compress.similarity('新福爾摩斯', '神探狄仁傑'), compress.similarity('漫威漫畫超級英雄', 'DC漫畫超級英雄'), compress.similarity('臺灣輕小說', '英國小說'), compress.similarity('中華民國法務部部長', '朝鮮勞動黨中央軍事委員會副委員長')]
+from scipy.stats import pearsonr
+spearmanr(a, b)
+```
+
 ## Built With
 
 python3.5
